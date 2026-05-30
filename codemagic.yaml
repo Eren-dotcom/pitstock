@@ -1,0 +1,31 @@
+# Codemagic CI/CD config for PitStock
+# Builds a release Android APK in the cloud — no PC needed.
+# Docs: https://docs.codemagic.io/yaml/yaml-getting-started/
+
+workflows:
+  android-apk:
+    name: PitStock Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    environment:
+      flutter: stable
+    scripts:
+      - name: Regenerate missing platform files
+        script: |
+          # Recreate any auto-generated Android glue without touching lib/ or our
+          # custom android manifest/build files that are already committed.
+          flutter create . --platforms=android --project-name pitstock
+      - name: Get packages
+        script: flutter pub get
+      - name: Build release APK
+        script: flutter build apk --release
+    artifacts:
+      - build/**/outputs/**/*.apk
+    publishing:
+      email:
+        recipients:
+          # OPTIONAL: put your email here to get the APK by mail when done.
+          # - you@example.com
+        notify:
+          success: true
+          failure: true

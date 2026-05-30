@@ -1,0 +1,62 @@
+name: pitstock
+description: PitStock — AI-powered spare parts inventory for Indian car parts.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+
+  # State management
+  provider: ^6.1.2
+
+  # Local database (offline-first)
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.4
+
+  # AI / ML — all free & on-device (no API key, works offline)
+  google_mlkit_commons: ^0.9.0             # Shared ML Kit input types
+  google_mlkit_text_recognition: ^0.13.0   # Bill/invoice OCR
+  google_mlkit_object_detection: ^0.13.0   # Live object scanning
+  google_mlkit_barcode_scanning: ^0.12.0   # Barcode / QR for parts
+  google_mlkit_image_labeling: ^0.13.0     # Free offline image labels (fallback recogniser)
+  tflite_flutter: ^0.11.0                   # Custom on-device TFLite part recogniser
+  image: ^4.2.0                             # Image decode/resize for TFLite preprocessing
+  camera: ^0.11.0+2
+  image_picker: ^1.1.2
+  speech_to_text: ^7.0.0                    # Voice search
+
+  # Charts / graphics-rich UI
+  fl_chart: ^0.69.0
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.0
+  shimmer: ^3.0.0
+  lottie: ^3.1.2
+
+  # Utilities
+  intl: ^0.19.0
+  uuid: ^4.5.1
+  share_plus: ^10.0.2
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  csv: ^6.0.0
+  excel: ^4.0.6                             # Excel (.xlsx) bulk import/export
+  file_picker: ^8.1.2                       # Pick CSV/Excel files for import
+  image_cropper: ^8.0.2                     # On-device invoice cropping (privacy)
+  permission_handler: ^11.3.1
+  fuzzywuzzy: ^1.1.6                        # Fuzzy advanced search
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/
+    - assets/images/
+    - assets/models/

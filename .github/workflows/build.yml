@@ -1,0 +1,50 @@
+name: Build PitStock APK
+
+# Runs on every push to main, and lets you trigger it manually from the
+# Actions tab (workflow_dispatch). Builds a release Android APK and uploads
+# it as a downloadable artifact.
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Show Flutter version
+        run: flutter --version
+
+      - name: Regenerate missing platform files
+        # Recreates auto-generated Android glue (gradle wrapper jar, etc.)
+        # without overwriting our lib/ or committed android/ files.
+        run: flutter create . --platforms=android --project-name pitstock
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pitstock-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
