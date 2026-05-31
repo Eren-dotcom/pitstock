@@ -26,13 +26,14 @@ android {
         versionName = "1.0.0"
     }
 
-    buildTypes {
-        release {
-            // Use debug signing so `flutter build apk` works out-of-the-box.
-            signingConfig = signingConfigs.debug
-            minifyEnabled = false
-        }
+buildTypes {
+    release {
+        // Use debug signing so `flutter build apk` works out-of-the-box.
+        signingConfig = signingConfigs.debug
+        minifyEnabled = false
+        shrinkResources = false
     }
+}
 }
 
 flutter {
