@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../models/app_user.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/invoice_provider.dart';
 import '../providers/settings_provider.dart';
@@ -102,7 +103,8 @@ class _BackupScreenState extends State<BackupScreen> {
             const Text(
                 'This will REPLACE all current data (parts, jobs, invoices, '
                 'users & settings) with the backup contents.'),
-            if (info != null) ...[
+            if (info != null) ...
+[
               const SizedBox(height: 12),
               Text('Backup date: ${_fmtDate(info['createdAt'])}',
                   style: const TextStyle(fontSize: 12.5)),
@@ -195,7 +197,8 @@ class _BackupScreenState extends State<BackupScreen> {
               const SizedBox(width: 12),
               Text(_status),
             ])
-          else ...[
+          else ...
+[
             FilledButton.icon(
               icon: const Icon(Icons.backup),
               label: const Text('Create backup & share'),

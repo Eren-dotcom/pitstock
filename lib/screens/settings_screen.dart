@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/app_user.dart';
 import '../services/export_service.dart';
 import '../services/label_service.dart';
 import '../theme/app_theme.dart';
@@ -47,7 +48,8 @@ class SettingsScreen extends StatelessWidget {
                   },
                 ),
               ),
-              if (auth.role.canManageUsers) ...[
+              if (auth.role.canManageUsers) ...
+[
                 const Divider(height: 1),
                 ListTile(
                   leading:
@@ -129,7 +131,8 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('Code-128 labels for all parts'),
                 onTap: () => LabelService.printPartLabels(inv.parts),
               ),
-              if (auth.role.canBackup) ...[
+              if (auth.role.canBackup) ...
+[
                 const Divider(height: 1),
                 ListTile(
                   leading:

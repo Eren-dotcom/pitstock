@@ -7,6 +7,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/scanned_item.dart';
+import '../models/app_user.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/auth_provider.dart';
 import '../data/database_helper.dart';
@@ -170,7 +171,8 @@ class _BillScanScreenState extends State<BillScanScreen> {
                     ),
             ),
           ),
-          if (_busy) ...[
+          if (_busy) ...
+[
             const SizedBox(height: 16),
             Row(children: [
               const SizedBox(
