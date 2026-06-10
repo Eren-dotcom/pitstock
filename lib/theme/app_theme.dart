@@ -48,7 +48,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: Color(0xFF0E1116),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -80,7 +80,7 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         foregroundColor: Colors.white,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         color: darkCard,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
