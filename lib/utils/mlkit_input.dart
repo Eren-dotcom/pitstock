@@ -26,12 +26,11 @@ class MlkitInput {
     final format = InputImageFormatValue.fromRawValue(image.format.raw);
     if (format == null) return null;
 
-    // For NV21 (Android) and BGRA (iOS) we can use the first plane buffer.
+    // Optimized: Use the first plane buffer directly to reduce memory overhead.
     final plane = image.planes.first;
-    final bytes = _concatPlanes(image.planes);
 
     return InputImage.fromBytes(
-      bytes: bytes,
+      bytes: plane.bytes,
       metadata: InputImageMetadata(
         size: Size(image.width.toDouble(), image.height.toDouble()),
         rotation: rotation,
@@ -39,13 +38,5 @@ class MlkitInput {
         bytesPerRow: plane.bytesPerRow,
       ),
     );
-  }
-
-  static Uint8List _concatPlanes(List<Plane> planes) {
-    final builder = BytesBuilder();
-    for (final p in planes) {
-      builder.add(p.bytes);
-    }
-    return builder.toBytes();
   }
 }
