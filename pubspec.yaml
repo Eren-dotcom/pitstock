@@ -21,10 +21,10 @@ dependencies:
 
   # AI / ML — all free & on-device (no API key, works offline)
   google_mlkit_commons: ^0.9.0             # Shared ML Kit input types
-  google_mlkit_text_recognition: any   # Bill/invoice OCR   # Bill/invoice OCR
-  google_mlkit_object_detection: any   # Live object scanning   # Live object scanning
-  google_mlkit_barcode_scanning: any   # Barcode / QR for parts   # Barcode / QR for parts
-  google_mlkit_image_labeling: any     # Free offline image labels (fallback recogniser)   # Free offline image labels (fallback recogniser)
+  google_mlkit_text_recognition: any       # Bill/invoice OCR
+  google_mlkit_object_detection: any       # Live object scanning
+  google_mlkit_barcode_scanning: any       # Barcode / QR for parts
+  google_mlkit_image_labeling: any         # Free offline image labels (fallback recogniser)
   tflite_flutter: ^0.11.0                   # Custom on-device TFLite part recogniser
   image: ^4.2.0                             # Image decode/resize for TFLite preprocessing
   camera: ^0.11.0+2
