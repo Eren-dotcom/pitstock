@@ -9,6 +9,8 @@ import '../providers/inventory_provider.dart';
 import '../providers/invoice_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/workorder_provider.dart';
+import '../providers/supplier_provider.dart';
+import '../providers/customer_provider.dart';
 import '../services/backup_service.dart';
 import '../theme/app_theme.dart';
 
@@ -82,6 +84,8 @@ class _BackupScreenState extends State<BackupScreen> {
       await context.read<InventoryProvider>().refresh();
       await context.read<WorkOrderProvider>().bootstrap();
       await context.read<InvoiceProvider>().bootstrap();
+      await context.read<SupplierProvider>().bootstrap();
+      await context.read<CustomerProvider>().bootstrap();
       await context.read<SettingsProvider>().load();
       await context.read<AuthProvider>().load();
     }
@@ -101,10 +105,9 @@ class _BackupScreenState extends State<BackupScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-                'This will REPLACE all current data (parts, jobs, invoices, '
-                'users & settings) with the backup contents.'),
-            if (info != null) ...
-[
+                'This will REPLACE all current data (parts, suppliers, customers, '
+                'jobs, invoices, users & settings) with the backup contents.'),
+            if (info != null) ...[
               const SizedBox(height: 12),
               Text('Backup date: ${_fmtDate(info['createdAt'])}',
                   style: const TextStyle(fontSize: 12.5)),
@@ -178,8 +181,8 @@ class _BackupScreenState extends State<BackupScreen> {
                             fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
                     Text(
-                        'Backs up all ${inv.totalSkus} parts plus jobs, invoices, '
-                        'users & settings into one file.',
+                        'Backs up all ${inv.totalSkus} parts plus suppliers, customers, '
+                        'jobs, invoices, users & settings into one file.',
                         style: const TextStyle(
                             color: Colors.white70, fontSize: 12)),
                   ],
@@ -197,8 +200,7 @@ class _BackupScreenState extends State<BackupScreen> {
               const SizedBox(width: 12),
               Text(_status),
             ])
-          else ...
-[
+          else ...[
             FilledButton.icon(
               icon: const Icon(Icons.backup),
               label: const Text('Create backup & share'),

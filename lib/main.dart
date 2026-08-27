@@ -10,6 +10,8 @@ import 'providers/settings_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/workorder_provider.dart';
 import 'providers/invoice_provider.dart';
+import 'providers/supplier_provider.dart';
+import 'providers/customer_provider.dart';
 import 'screens/splash_screen.dart';
 
 Future<void> main() async {
@@ -19,7 +21,7 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  // Initialise DB and seed the Indian car spare-parts catalogue on first run.
+  // Initialise DB and seed the Indian car spare-parts catalogue & vendors on first run.
   final db = DatabaseHelper.instance;
   await db.database;
   await SeedData.ensureSeeded(db);
@@ -39,6 +41,8 @@ class PitStockApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()..load()),
         ChangeNotifierProvider(create: (_) => WorkOrderProvider()..bootstrap()),
         ChangeNotifierProvider(create: (_) => InvoiceProvider()..bootstrap()),
+        ChangeNotifierProvider(create: (_) => SupplierProvider()..bootstrap()),
+        ChangeNotifierProvider(create: (_) => CustomerProvider()..bootstrap()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, _) {

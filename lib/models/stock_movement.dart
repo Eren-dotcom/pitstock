@@ -1,4 +1,16 @@
-enum MovementType { stockIn, stockOut, adjust, billImport, scanImport }
+enum MovementType {
+  stockIn,
+  stockOut,
+  adjust,
+  billImport,
+  scanImport,
+  sale,
+  purchaseReceive,
+  damage,
+  stockReturn,
+  stockAudit,
+  writeOff,
+}
 
 extension MovementTypeX on MovementType {
   String get label => switch (this) {
@@ -7,6 +19,27 @@ extension MovementTypeX on MovementType {
         MovementType.adjust => 'Adjustment',
         MovementType.billImport => 'Bill Import',
         MovementType.scanImport => 'Scan Import',
+        MovementType.sale => 'POS Sale',
+        MovementType.purchaseReceive => 'PO Receive',
+        MovementType.damage => 'Damaged / Broken',
+        MovementType.stockReturn => 'Customer Return',
+        MovementType.stockAudit => 'Audit Reconciliation',
+        MovementType.writeOff => 'Inventory Write-off',
+      };
+
+  bool get isPositive => switch (this) {
+        MovementType.stockIn ||
+        MovementType.billImport ||
+        MovementType.scanImport ||
+        MovementType.purchaseReceive ||
+        MovementType.stockReturn =>
+          true,
+        MovementType.stockOut ||
+        MovementType.sale ||
+        MovementType.damage ||
+        MovementType.writeOff =>
+          false,
+        MovementType.adjust || MovementType.stockAudit => true, // depends on delta
       };
 }
 
@@ -17,6 +50,7 @@ class StockMovement {
   final MovementType type;
   final int delta; // +ve in, -ve out
   final String? reference; // bill no, customer, reason
+  final double? unitCost;
   final DateTime date;
 
   StockMovement({
@@ -25,6 +59,7 @@ class StockMovement {
     required this.type,
     required this.delta,
     this.reference,
+    this.unitCost,
     required this.date,
   });
 

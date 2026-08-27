@@ -16,6 +16,15 @@ import 'workorders_screen.dart';
 import 'bulk_import_screen.dart';
 import 'invoices_screen.dart';
 import 'backup_screen.dart';
+import 'pos_billing_screen.dart';
+import 'customers_screen.dart';
+import 'suppliers_screen.dart';
+import 'purchase_orders_screen.dart';
+import 'stock_movements_screen.dart';
+import 'stock_audit_screen.dart';
+import 'label_studio_screen.dart';
+import 'shop_profile_screen.dart';
+import 'low_stock_screen.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -78,7 +87,7 @@ class _HomeShellState extends State<HomeShell> {
             _navItem(1, Icons.inventory_2_rounded, 'Stock'),
             const SizedBox(width: 40),
             _navItem(2, Icons.search_rounded, 'Search'),
-            _navItem(3, Icons.grid_view_rounded, 'More'),
+            _navItem(3, Icons.grid_view_rounded, 'A to Z'),
           ],
         ),
       ),
@@ -98,7 +107,11 @@ class _HomeShellState extends State<HomeShell> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: color, size: 24),
-            Text(label, style: TextStyle(color: color, fontSize: 11)),
+            Text(label,
+                style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
           ],
         ),
       ),
@@ -132,7 +145,7 @@ class _AiActionSheet extends StatelessWidget {
           Row(children: [
             const Icon(Icons.auto_awesome, color: AppTheme.primary),
             const SizedBox(width: 8),
-            Text('AI Quick Actions',
+            Text('AI Quick Actions & Tools',
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
@@ -143,7 +156,7 @@ class _AiActionSheet extends StatelessWidget {
               icon: Icons.receipt_long,
               gradient: AppTheme.brandGradient,
               title: 'Scan a Bill / Invoice',
-              subtitle: 'OCR auto-extracts items into inventory',
+              subtitle: 'On-device OCR extracts line items into stock',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
@@ -153,7 +166,7 @@ class _AiActionSheet extends StatelessWidget {
               icon: Icons.camera_alt,
               gradient: AppTheme.sunsetGradient,
               title: 'Live Scan Shop / Garage',
-              subtitle: 'Detect parts & barcodes with the camera',
+              subtitle: 'Detect parts & barcodes with live camera',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
@@ -173,22 +186,22 @@ class _AiActionSheet extends StatelessWidget {
                         builder: (_) => const PhotoRecognitionScreen()));
               }),
           _tile(context,
-              icon: Icons.build_circle,
+              icon: Icons.point_of_sale,
               gradient: const LinearGradient(
                   colors: [Color(0xFF00C2A8), Color(0xFF2E9E5B)]),
-              title: 'New Work Order / Job',
-              subtitle: 'Auto-deducts parts on completion',
+              title: 'POS Quick Checkout',
+              subtitle: 'Fast counter billing with GST & UPI QR',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const WorkOrdersScreen()));
+                    MaterialPageRoute(builder: (_) => const PosBillingScreen()));
               }),
           _tile(context,
               icon: Icons.upload_file,
               gradient: const LinearGradient(
                   colors: [Color(0xFFF4B400), Color(0xFFFF7A00)]),
               title: 'Bulk Import (CSV / Excel)',
-              subtitle: 'Import a supplier price list',
+              subtitle: 'Import supplier catalog or price list',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
@@ -199,7 +212,7 @@ class _AiActionSheet extends StatelessWidget {
               gradient: const LinearGradient(
                   colors: [Color(0xFF7C4DFF), Color(0xFF448AFF)]),
               title: 'Add Part Manually',
-              subtitle: 'Create a new SKU',
+              subtitle: 'Create a new SKU in inventory',
               onTap: () {
                 Navigator.pop(context);
                 Navigator.push(context,
@@ -261,57 +274,120 @@ class _AiActionSheet extends StatelessWidget {
   }
 }
 
-/// "More" hub: grid of all secondary features, role-aware.
+/// Comprehensive "A to Z" Hub of all PitStock modules.
 class _MoreHub extends StatelessWidget {
   const _MoreHub();
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final tiles = <_HubTile>[
-      _HubTile('Work Orders', Icons.build_circle, AppTheme.secondary,
-          () => const WorkOrdersScreen()),
-      _HubTile('Invoices', Icons.receipt_long, AppTheme.primary,
-          () => const InvoicesScreen()),
-      if (auth.role.canViewReports)
-        _HubTile('Reports', Icons.insights, AppTheme.accent,
-            () => const AnalyticsScreen()),
-      _HubTile('Bulk Import', Icons.upload_file, const Color(0xFF7C4DFF),
-          () => const BulkImportScreen()),
-      _HubTile('Bill Scanner', Icons.document_scanner, const Color(0xFFE91E63),
-          () => const BillScanScreen()),
-      _HubTile('Live Scan', Icons.camera_alt, const Color(0xFF00BCD4),
-          () => const LiveScanScreen()),
-      _HubTile('Photo ID', Icons.center_focus_strong, const Color(0xFFE91E63),
-          () => const PhotoRecognitionScreen()),
-      _HubTile('Add Part', Icons.add_box, AppTheme.success,
-          () => const PartEditScreen()),
-      if (auth.role.canBackup)
-        _HubTile('Backup', Icons.cloud_sync, const Color(0xFF2E9E5B),
-            () => const BackupScreen()),
-      _HubTile('Settings', Icons.settings, Colors.blueGrey,
-          () => const SettingsScreen()),
-    ];
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 100),
       children: [
-        Text('More',
+        Text('PitStock A to Z Hub',
             style: Theme.of(context)
                 .textTheme
                 .titleLarge
                 ?.copyWith(fontWeight: FontWeight.w700)),
+        const SizedBox(height: 4),
+        Text('Complete suite of automotive inventory & garage tools',
+            style: TextStyle(
+                color:
+                    Theme.of(context).colorScheme.onSurface.withOpacity(.6),
+                fontSize: 12)),
         const SizedBox(height: 16),
+
+        // Section: Sales & Billing
+        _hubSection(context, 'Point of Sale & Billing', [
+          _HubTile('POS Quick Sale', Icons.point_of_sale, AppTheme.primary,
+              () => const PosBillingScreen()),
+          _HubTile('Invoices & Bills', Icons.receipt_long, AppTheme.secondary,
+              () => const InvoicesScreen()),
+        ]),
+        const SizedBox(height: 16),
+
+        // Section: Workshop & Garage
+        _hubSection(context, 'Workshop & Garage Jobs', [
+          _HubTile('Job Cards', Icons.build_circle, AppTheme.accent,
+              () => const WorkOrdersScreen()),
+          _HubTile('Customers & Vehicles', Icons.people, const Color(0xFFE91E63),
+              () => const CustomersScreen()),
+        ]),
+        const SizedBox(height: 16),
+
+        // Section: Inventory Operations
+        _hubSection(context, 'Inventory & Stock Management', [
+          _HubTile('Add Part', Icons.add_box, AppTheme.success,
+              () => const PartEditScreen()),
+          _HubTile('Stock Audit', Icons.fact_check, const Color(0xFF7C4DFF),
+              () => const StockAuditScreen()),
+          _HubTile('Stock Movements', Icons.history, const Color(0xFF00BCD4),
+              () => const StockMovementsScreen()),
+          _HubTile('Stock Alerts', Icons.warning_amber, AppTheme.warning,
+              () => const LowStockScreen()),
+          _HubTile('Label Studio', Icons.qr_code_2, const Color(0xFF3F51B5),
+              () => const LabelStudioScreen()),
+          _HubTile('Bulk Import', Icons.upload_file, const Color(0xFF9C27B0),
+              () => const BulkImportScreen()),
+        ]),
+        const SizedBox(height: 16),
+
+        // Section: Vendors & Buying
+        _hubSection(context, 'Vendors & Purchasing', [
+          _HubTile('Suppliers', Icons.business, const Color(0xFF455A64),
+              () => const SuppliersScreen()),
+          _HubTile('Purchase Orders', Icons.shopping_bag, const Color(0xFF009688),
+              () => const PurchaseOrdersScreen()),
+        ]),
+        const SizedBox(height: 16),
+
+        // Section: AI & Smart Tools
+        _hubSection(context, 'AI & Recognition Tools', [
+          _HubTile('Bill OCR Scanner', Icons.document_scanner, const Color(0xFFE91E63),
+              () => const BillScanScreen()),
+          _HubTile('Live Camera Scan', Icons.camera_alt, const Color(0xFF00BCD4),
+              () => const LiveScanScreen()),
+          _HubTile('Part Photo ID', Icons.center_focus_strong, const Color(0xFFFF5722),
+              () => const PhotoRecognitionScreen()),
+        ]),
+        const SizedBox(height: 16),
+
+        // Section: System & Analytics
+        _hubSection(context, 'Reports & Administration', [
+          if (auth.role.canViewReports)
+            _HubTile('Analytics & Reports', Icons.insights, AppTheme.primary,
+                () => const AnalyticsScreen()),
+          _HubTile('Shop Profile & GST', Icons.storefront, AppTheme.secondary,
+              () => const ShopProfileScreen()),
+          if (auth.role.canBackup)
+            _HubTile('Backup & Restore', Icons.cloud_sync, const Color(0xFF2E9E5B),
+                () => const BackupScreen()),
+          _HubTile('Settings', Icons.settings, Colors.blueGrey,
+              () => const SettingsScreen()),
+        ]),
+      ],
+    );
+  }
+
+  Widget _hubSection(
+      BuildContext context, String sectionTitle, List<_HubTile> tiles) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(sectionTitle,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+        const SizedBox(height: 8),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
+          mainAxisSpacing: 10,
+          crossAxisSpacing: 10,
+          childAspectRatio: 1.45,
           children: tiles
               .map((t) => InkWell(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
                     onTap: () => Navigator.push(context,
                         MaterialPageRoute(builder: (_) => t.builder())),
                     child: Card(
@@ -319,16 +395,16 @@ class _MoreHub extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(14),
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                                color: t.color.withOpacity(.15),
-                                borderRadius: BorderRadius.circular(16)),
-                            child: Icon(t.icon, color: t.color, size: 28),
+                                color: t.color.withOpacity(.14),
+                                borderRadius: BorderRadius.circular(14)),
+                            child: Icon(t.icon, color: t.color, size: 24),
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 8),
                           Text(t.label,
                               style:
-                                  const TextStyle(fontWeight: FontWeight.w600)),
+                                  const TextStyle(fontWeight: FontWeight.w600, fontSize: 12.5)),
                         ],
                       ),
                     ),

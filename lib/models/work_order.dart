@@ -1,10 +1,19 @@
-enum WorkOrderStatus { open, inProgress, completed, cancelled }
+enum WorkOrderStatus {
+  open,
+  inProgress,
+  waitingParts,
+  readyForDelivery,
+  completed,
+  cancelled
+}
 
 extension WorkOrderStatusX on WorkOrderStatus {
   String get label => switch (this) {
-        WorkOrderStatus.open => 'Open',
+        WorkOrderStatus.open => 'Open / Booked',
         WorkOrderStatus.inProgress => 'In Progress',
-        WorkOrderStatus.completed => 'Completed',
+        WorkOrderStatus.waitingParts => 'Waiting for Parts',
+        WorkOrderStatus.readyForDelivery => 'Ready for Delivery',
+        WorkOrderStatus.completed => 'Completed / Invoiced',
         WorkOrderStatus.cancelled => 'Cancelled',
       };
 }
@@ -13,6 +22,7 @@ extension WorkOrderStatusX on WorkOrderStatus {
 class WorkOrderLine {
   final String partId; // empty for labour lines
   final String name;
+  final String partNumber;
   int quantity;
   double price;
   double gstPercent;
@@ -23,6 +33,7 @@ class WorkOrderLine {
   WorkOrderLine({
     required this.partId,
     required this.name,
+    this.partNumber = '',
     this.quantity = 1,
     this.price = 0,
     this.gstPercent = 18,
@@ -40,6 +51,7 @@ class WorkOrderLine {
   Map<String, dynamic> toMap() => {
         'partId': partId,
         'name': name,
+        'partNumber': partNumber,
         'quantity': quantity,
         'price': price,
         'gstPercent': gstPercent,
@@ -51,6 +63,7 @@ class WorkOrderLine {
   factory WorkOrderLine.fromMap(Map<String, dynamic> m) => WorkOrderLine(
         partId: m['partId'] as String? ?? '',
         name: m['name'] as String? ?? '',
+        partNumber: m['partNumber'] as String? ?? '',
         quantity: (m['quantity'] as num?)?.toInt() ?? 1,
         price: (m['price'] as num?)?.toDouble() ?? 0,
         gstPercent: (m['gstPercent'] as num?)?.toDouble() ?? 18,
@@ -65,10 +78,18 @@ class WorkOrderLine {
 class WorkOrder {
   final String id;
   String number; // human-friendly e.g. JOB-0001
+  String? customerId;
   String customerName;
   String? customerPhone;
   String? vehicleReg;
   String? vehicleInfo;
+  String? technician; // Assigned mechanic
+  int? odometer; // Vehicle km reading on arrival
+  String? fuelLevel; // E, 1/4, 1/2, 3/4, F
+  String? complaints; // Customer reported issues
+  String? internalNotes; // Mechanic notes / inspection findings
+  DateTime? estimatedCompletion;
+  double discount;
   WorkOrderStatus status;
   List<WorkOrderLine> lines;
   bool stockDeducted; // guard so we deduct only once
@@ -79,10 +100,18 @@ class WorkOrder {
   WorkOrder({
     required this.id,
     required this.number,
+    this.customerId,
     required this.customerName,
     this.customerPhone,
     this.vehicleReg,
     this.vehicleInfo,
+    this.technician,
+    this.odometer,
+    this.fuelLevel,
+    this.complaints,
+    this.internalNotes,
+    this.estimatedCompletion,
+    this.discount = 0.0,
     this.status = WorkOrderStatus.open,
     List<WorkOrderLine>? lines,
     this.stockDeducted = false,
@@ -94,17 +123,26 @@ class WorkOrder {
   double get subtotal => lines.fold(0.0, (s, l) => s + l.lineSubtotal);
   double get gstTotal => lines.fold(0.0, (s, l) => s + l.lineGst);
   double get coreTotal => lines.fold(0.0, (s, l) => s + l.lineCore);
-  double get grandTotal => lines.fold(0.0, (s, l) => s + l.lineTotal);
+  double get grandTotal => (subtotal + gstTotal + coreTotal - discount).clamp(0.0, double.infinity);
   int get partCount =>
       lines.where((l) => !l.isLabour).fold(0, (s, l) => s + l.quantity);
+  int get labourCount => lines.where((l) => l.isLabour).length;
 
   Map<String, dynamic> toMap() => {
         'id': id,
         'number': number,
+        'customerId': customerId,
         'customerName': customerName,
         'customerPhone': customerPhone,
         'vehicleReg': vehicleReg,
         'vehicleInfo': vehicleInfo,
+        'technician': technician,
+        'odometer': odometer,
+        'fuelLevel': fuelLevel,
+        'complaints': complaints,
+        'internalNotes': internalNotes,
+        'estimatedCompletion': estimatedCompletion?.toIso8601String(),
+        'discount': discount,
         'status': status.name,
         'stockDeducted': stockDeducted ? 1 : 0,
         'invoiceId': invoiceId,
@@ -117,10 +155,20 @@ class WorkOrder {
       WorkOrder(
         id: m['id'] as String,
         number: m['number'] as String,
+        customerId: m['customerId'] as String?,
         customerName: m['customerName'] as String? ?? '',
         customerPhone: m['customerPhone'] as String?,
         vehicleReg: m['vehicleReg'] as String?,
         vehicleInfo: m['vehicleInfo'] as String?,
+        technician: m['technician'] as String?,
+        odometer: (m['odometer'] as num?)?.toInt(),
+        fuelLevel: m['fuelLevel'] as String?,
+        complaints: m['complaints'] as String?,
+        internalNotes: m['internalNotes'] as String?,
+        estimatedCompletion: m['estimatedCompletion'] != null
+            ? DateTime.parse(m['estimatedCompletion'] as String)
+            : null,
+        discount: (m['discount'] as num?)?.toDouble() ?? 0.0,
         status: WorkOrderStatus.values.firstWhere(
             (e) => e.name == m['status'],
             orElse: () => WorkOrderStatus.open),

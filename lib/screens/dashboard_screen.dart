@@ -11,6 +11,12 @@ import '../widgets/stat_card.dart';
 import '../widgets/part_tile.dart';
 import 'part_detail_screen.dart';
 import 'low_stock_screen.dart';
+import 'pos_billing_screen.dart';
+import 'workorders_screen.dart';
+import 'bill_scan_screen.dart';
+import 'stock_audit_screen.dart';
+import 'customers_screen.dart';
+import 'suppliers_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -59,6 +65,87 @@ class DashboardScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Quick Action Hub Bar
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _actionBtn(
+                  context,
+                  label: 'POS Sale',
+                  icon: Icons.point_of_sale,
+                  gradient: AppTheme.brandGradient,
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const PosBillingScreen())),
+                ),
+                const SizedBox(width: 10),
+                _actionBtn(
+                  context,
+                  label: 'Job Card',
+                  icon: Icons.build_circle,
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFF00C2A8), Color(0xFF2E9E5B)]),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const WorkOrdersScreen())),
+                ),
+                const SizedBox(width: 10),
+                _actionBtn(
+                  context,
+                  label: 'Scan Bill',
+                  icon: Icons.receipt_long,
+                  gradient: AppTheme.sunsetGradient,
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const BillScanScreen())),
+                ),
+                const SizedBox(width: 10),
+                _actionBtn(
+                  context,
+                  label: 'Stock Audit',
+                  icon: Icons.fact_check,
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFF7C4DFF), Color(0xFF448AFF)]),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const StockAuditScreen())),
+                ),
+                const SizedBox(width: 10),
+                _actionBtn(
+                  context,
+                  label: 'Customers',
+                  icon: Icons.people,
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFFE91E63), Color(0xFFFF7A00)]),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const CustomersScreen())),
+                ),
+                const SizedBox(width: 10),
+                _actionBtn(
+                  context,
+                  label: 'Suppliers',
+                  icon: Icons.business,
+                  gradient: const LinearGradient(
+                      colors: [Color(0xFF455A64), Color(0xFF607D8B)]),
+                  onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const SuppliersScreen())),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Stat Cards Grid
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -91,9 +178,9 @@ class DashboardScreen extends StatelessWidget {
                       colors: [Color(0xFF00C2A8), Color(0xFF2E9E5B)])),
             ],
           ).animate().fadeIn(duration: 400.ms).slideY(begin: .1, end: 0),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
-          // Alerts
+          // Alerts Banner
           if (inv.lowStock.isNotEmpty || inv.outOfStock.isNotEmpty)
             _alertBanner(context, inv),
 
@@ -103,7 +190,7 @@ class DashboardScreen extends StatelessWidget {
           _CategoryChart(data: inv.countByCategory),
           const SizedBox(height: 20),
 
-          _sectionHeader(context, 'Recently Updated'),
+          _sectionHeader(context, 'Recently Updated Parts'),
           const SizedBox(height: 8),
           ...(inv.parts.toList()
                 ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt)))
@@ -115,6 +202,44 @@ class DashboardScreen extends StatelessWidget {
                       MaterialPageRoute(
                           builder: (_) => PartDetailScreen(partId: p.id))))),
         ],
+      ),
+    );
+  }
+
+  Widget _actionBtn(
+    BuildContext context, {
+    required String label,
+    required IconData icon,
+    required Gradient gradient,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.12),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: Colors.white, size: 18),
+            const SizedBox(width: 6),
+            Text(label,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5)),
+          ],
+        ),
       ),
     );
   }
@@ -141,7 +266,7 @@ class DashboardScreen extends StatelessWidget {
           TextButton(
             onPressed: () => Navigator.push(context,
                 MaterialPageRoute(builder: (_) => const LowStockScreen())),
-            child: const Text('View'),
+            child: const Text('View Alerts'),
           ),
         ],
       ),
@@ -179,7 +304,7 @@ class _CategoryChart extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: SizedBox(
-          height: 200,
+          height: 190,
           child: BarChart(
             BarChartData(
               alignment: BarChartAlignment.spaceAround,

@@ -6,10 +6,13 @@ import '../models/work_order.dart';
 import '../providers/workorder_provider.dart';
 import '../providers/inventory_provider.dart';
 import '../providers/invoice_provider.dart';
+import '../providers/customer_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/invoice_service.dart';
+import '../services/job_card_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/formatters.dart';
+import 'invoice_detail_screen.dart';
 
 class WorkOrderEditScreen extends StatefulWidget {
   final String orderId;
@@ -22,6 +25,7 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
   @override
   Widget build(BuildContext context) {
     final wop = context.watch<WorkOrderProvider>();
+    final settings = context.watch<SettingsProvider>();
     final wo = wop.orders.firstWhere((o) => o.id == widget.orderId,
         orElse: () => WorkOrder(
             id: '',
@@ -29,24 +33,31 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
             customerName: '',
             createdAt: DateTime.now(),
             updatedAt: DateTime.now()));
+
     if (wo.id.isEmpty) {
       return const Scaffold(body: Center(child: Text('Work order not found')));
     }
+
     final completed = wo.status == WorkOrderStatus.completed;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(wo.number),
         actions: [
+          IconButton(
+            tooltip: 'Print Job Card',
+            icon: const Icon(Icons.print),
+            onPressed: () => _printJobCard(wo, settings),
+          ),
           if (!completed)
             IconButton(
-              tooltip: 'Add part',
+              tooltip: 'Add Part',
               icon: const Icon(Icons.add_shopping_cart),
               onPressed: () => _addPart(wo),
             ),
           if (!completed)
             IconButton(
-              tooltip: 'Add labour',
+              tooltip: 'Add Labour',
               icon: const Icon(Icons.engineering),
               onPressed: () => _addLabour(wo),
             ),
@@ -55,9 +66,40 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
       body: Column(
         children: [
           _customerHeader(wo),
+          _statusSelector(wo),
           Expanded(
             child: wo.lines.isEmpty
-                ? const Center(child: Text('No items. Add parts or labour.'))
+                ? Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.build_outlined,
+                            size: 48,
+                            color: Theme.of(context)
+                                .disabledColor
+                                .withOpacity(.4)),
+                        const SizedBox(height: 8),
+                        const Text('No parts or labour added yet'),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            FilledButton.icon(
+                              icon: const Icon(Icons.add_shopping_cart),
+                              label: const Text('Add Part'),
+                              onPressed: () => _addPart(wo),
+                            ),
+                            const SizedBox(width: 8),
+                            OutlinedButton.icon(
+                              icon: const Icon(Icons.engineering),
+                              label: const Text('Add Labour'),
+                              onPressed: () => _addLabour(wo),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
                 : ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: wo.lines.length,
@@ -73,7 +115,7 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
   Widget _customerHeader(WorkOrder wo) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.all(12),
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
           gradient: AppTheme.brandGradient,
@@ -81,16 +123,64 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(wo.customerName,
-              style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700)),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(wo.customerName,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700)),
+              Text(wo.vehicleReg ?? '',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14)),
+            ],
+          ),
           const SizedBox(height: 2),
           Text(
-              '${wo.vehicleInfo ?? ''}  ${wo.vehicleReg ?? ''}  ${wo.customerPhone ?? ''}',
+              '${wo.vehicleInfo ?? 'Vehicle'} • ${wo.customerPhone ?? 'No Phone'}'
+              '${wo.technician != null ? ' • Tech: ${wo.technician}' : ''}',
               style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          if (wo.complaints != null && wo.complaints!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text('Issues: ${wo.complaints}',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontStyle: FontStyle.italic,
+                    fontSize: 11.5)),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _statusSelector(WorkOrder wo) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: WorkOrderStatus.values.map((s) {
+            final isSelected = wo.status == s;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: ChoiceChip(
+                label: Text(s.label, style: const TextStyle(fontSize: 11.5)),
+                selected: isSelected,
+                onSelected: (val) {
+                  if (val && !wo.stockDeducted) {
+                    setState(() => wo.status = s);
+                    context.read<WorkOrderProvider>().save(wo);
+                  }
+                },
+              ),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -175,7 +265,7 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.check_circle),
-                      label: const Text('Complete + Deduct'),
+                      label: const Text('Complete Job'),
                       onPressed: () => _complete(wo),
                     ),
                   ),
@@ -196,18 +286,18 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
   }
 
   Widget _row(String label, double v, {bool bold = false}) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 2),
+        padding: const EdgeInsets.symmetric(vertical: 1.5),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
                 style: TextStyle(
                     fontWeight: bold ? FontWeight.w700 : FontWeight.normal,
-                    fontSize: bold ? 16 : 14)),
+                    fontSize: bold ? 15 : 13)),
             Text(Fmt.money(v),
                 style: TextStyle(
                     fontWeight: bold ? FontWeight.w700 : FontWeight.normal,
-                    fontSize: bold ? 16 : 14)),
+                    fontSize: bold ? 15 : 13)),
           ],
         ),
       );
@@ -224,6 +314,7 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
       wo.lines.add(WorkOrderLine(
         partId: part.id,
         name: part.name,
+        partNumber: part.partNumber,
         quantity: 1,
         price: part.sellingPrice,
         gstPercent: part.gstPercent,
@@ -234,12 +325,12 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
   }
 
   Future<void> _addLabour(WorkOrder wo) async {
-    final name = TextEditingController(text: 'Labour / Service');
+    final name = TextEditingController(text: 'General Service Labour');
     final amount = TextEditingController(text: '500');
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Add Labour'),
+        title: const Text('Add Labour / Fitment Charge'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(
               controller: name,
@@ -275,8 +366,10 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
 
   Future<void> _complete(WorkOrder wo) async {
     final inv = context.read<InventoryProvider>();
-    final warnings =
-        await context.read<WorkOrderProvider>().complete(wo, inv);
+    final custProv = context.read<CustomerProvider>();
+    final warnings = await context
+        .read<WorkOrderProvider>()
+        .complete(wo, inv, customerProvider: custProv);
     if (!mounted) return;
     setState(() {});
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -288,19 +381,35 @@ class _WorkOrderEditScreenState extends State<WorkOrderEditScreen> {
   }
 
   Future<void> _generateBill(WorkOrder wo) async {
-    final settings = context.read<SettingsProvider>();
     final inv = context.read<InvoiceProvider>();
+    final custProv = context.read<CustomerProvider>();
+    final invProv = context.read<InventoryProvider>();
+
+    if (!wo.stockDeducted) {
+      await context
+          .read<WorkOrderProvider>()
+          .complete(wo, invProv, customerProvider: custProv);
+    }
+
     final invoice = await inv.createFromWorkOrder(wo);
-    wo.invoiceId = invoice['id'] as String;
+    wo.invoiceId = invoice.id;
     await context.read<WorkOrderProvider>().save(wo);
-    await InvoiceService.printInvoice(
-      invoiceNumber: invoice['number'] as String,
+
+    if (mounted) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (_) => InvoiceDetailScreen(invoiceId: invoice.id)),
+      );
+    }
+  }
+
+  Future<void> _printJobCard(WorkOrder wo, SettingsProvider settings) async {
+    await JobCardService.printJobCard(
+      workOrder: wo,
       shopName: settings.shopName,
-      shopGstin: settings.gstin,
-      customerName: wo.customerName,
-      customerPhone: wo.customerPhone,
-      vehicleReg: wo.vehicleReg,
-      lines: wo.lines,
+      shopPhone: settings.shopPhone,
+      shopAddress: settings.shopAddress,
     );
   }
 }
@@ -333,7 +442,7 @@ class _PartPickerState extends State<_PartPicker> {
             child: TextField(
               autofocus: true,
               decoration: const InputDecoration(
-                  hintText: 'Search part…', prefixIcon: Icon(Icons.search)),
+                  hintText: 'Search parts for job…', prefixIcon: Icon(Icons.search)),
               onChanged: (v) => setState(() => _q = v),
             ),
           ),
@@ -344,9 +453,9 @@ class _PartPickerState extends State<_PartPicker> {
               itemBuilder: (_, i) {
                 final p = list[i];
                 return ListTile(
-                  title: Text(p.name),
+                  title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                   subtitle: Text(
-                      '${p.brand} • ${Fmt.money(p.sellingPrice)} • stock ${p.quantity}'),
+                      '${p.brand} • ${Fmt.money(p.sellingPrice)} • Stock: ${p.quantity} • Loc: ${p.binLocation}'),
                   trailing: p.hasCore
                       ? const Chip(label: Text('CORE', style: TextStyle(fontSize: 10)))
                       : null,

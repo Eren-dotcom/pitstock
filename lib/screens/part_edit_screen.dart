@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../models/part.dart';
 import '../providers/inventory_provider.dart';
+import '../providers/supplier_provider.dart';
 import '../data/catalogue_data.dart';
 
 class PartEditScreen extends StatefulWidget {
@@ -26,6 +27,12 @@ class _PartEditScreenState extends State<PartEditScreen> {
       text: (widget.existing?.quantity ?? 0).toString());
   late final _low = TextEditingController(
       text: (widget.existing?.lowStockThreshold ?? 5).toString());
+  late final _minStock = TextEditingController(
+      text: (widget.existing?.minStock ?? 2).toString());
+  late final _maxStock = TextEditingController(
+      text: (widget.existing?.maxStock ?? 50).toString());
+  late final _reorderQty = TextEditingController(
+      text: (widget.existing?.reorderQty ?? 10).toString());
   late final _cost = TextEditingController(
       text: (widget.existing?.costPrice ?? 0).toStringAsFixed(0));
   late final _sell = TextEditingController(
@@ -57,11 +64,22 @@ class _PartEditScreenState extends State<PartEditScreen> {
   late final _coreCharge = TextEditingController(
       text: (widget.existing?.coreCharge ?? 0).toStringAsFixed(0));
   late bool _hasCore = widget.existing?.hasCore ?? false;
+  late final _warranty = TextEditingController(
+      text: (widget.existing?.warrantyMonths ?? 0).toString());
+  late String? _supplier = widget.existing?.supplier;
 
   @override
   Widget build(BuildContext context) {
     final inv = context.read<InventoryProvider>();
+    final supProv = context.watch<SupplierProvider>();
     final editing = widget.existing != null;
+
+    final supplierList = [
+      'None',
+      ...supProv.suppliers.map((s) => s.name),
+      ...CatalogueData.brands,
+    ].toSet().toList();
+
     return Scaffold(
       appBar: AppBar(title: Text(editing ? 'Edit Part' : 'Add Part')),
       body: Form(
@@ -70,17 +88,17 @@ class _PartEditScreenState extends State<PartEditScreen> {
           padding: const EdgeInsets.all(16),
           children: [
             _field(_name, 'Part name *', required: true),
-            _field(_partNo, 'Part number'),
+            _field(_partNo, 'Part number / SKU'),
             Row(children: [
-              Expanded(child: _dropdown('Category', CatalogueData.categories,
-                  _category, (v) => setState(() => _category = v!))),
+              Expanded(
+                  child: _dropdown('Category', CatalogueData.categories,
+                      _category, (v) => setState(() => _category = v!))),
               const SizedBox(width: 12),
-              Expanded(child: _dropdown('Brand / Maker', CatalogueData.brands,
-                  _brand, (v) => setState(() => _brand = v!))),
+              Expanded(
+                  child: _dropdown('Brand / Maker', CatalogueData.brands,
+                      _brand, (v) => setState(() => _brand = v!))),
             ]),
             const SizedBox(height: 12),
-            // OEM vs Aftermarket
-            const SizedBox(height: 4),
             SegmentedButton<PartType>(
               segments: const [
                 ButtonSegment(
@@ -97,10 +115,9 @@ class _PartEditScreenState extends State<PartEditScreen> {
                   child: _dropdown('Vehicle make', CatalogueData.vehicleMakes,
                       _vehicleMake, (v) => setState(() => _vehicleMake = v!))),
               const SizedBox(width: 12),
-              Expanded(child: _field(_model, 'Model')),
+              Expanded(child: _field(_model, 'Model (e.g. Swift)')),
             ]),
             const SizedBox(height: 12),
-            // Fitment year range
             Row(children: [
               Expanded(child: _field(_yearFrom, 'Year from', number: true)),
               const SizedBox(width: 12),
@@ -108,12 +125,12 @@ class _PartEditScreenState extends State<PartEditScreen> {
             ]),
             const SizedBox(height: 12),
             Row(children: [
-              Expanded(
-                  child: _field(_qty, 'Quantity', number: true)),
+              Expanded(child: _field(_qty, 'Current Quantity', number: true)),
               const SizedBox(width: 12),
-              Expanded(child: _dropdown('Unit',
-                  const ['pcs', 'set', 'litre', 'box', 'pair'], _unit,
-                  (v) => setState(() => _unit = v!))),
+              Expanded(
+                  child: _dropdown('Unit',
+                      const ['pcs', 'set', 'litre', 'box', 'pair'], _unit,
+                      (v) => setState(() => _unit = v!))),
             ]),
             const SizedBox(height: 12),
             Row(children: [
@@ -134,33 +151,47 @@ class _PartEditScreenState extends State<PartEditScreen> {
               ),
             ]),
             const SizedBox(height: 12),
-            // Shelf / bin location tracking
+            Row(children: [
+              Expanded(child: _field(_minStock, 'Min Safety Stock', number: true)),
+              const SizedBox(width: 12),
+              Expanded(child: _field(_maxStock, 'Max Capacity', number: true)),
+              const SizedBox(width: 12),
+              Expanded(child: _field(_reorderQty, 'Reorder Qty', number: true)),
+            ]),
+            const SizedBox(height: 12),
             Row(children: [
               Expanded(child: _field(_shelf, 'Shelf (e.g. A1)')),
               const SizedBox(width: 12),
               Expanded(child: _field(_bin, 'Bin (e.g. 03)')),
             ]),
-            const SizedBox(height: 4),
-            // Core charge tracking
+            const SizedBox(height: 8),
+            _dropdown(
+              'Supplier / Vendor',
+              supplierList,
+              _supplier ?? 'None',
+              (v) => setState(() => _supplier = v == 'None' ? null : v),
+            ),
+            const SizedBox(height: 8),
+            _field(_warranty, 'Warranty (Months)', number: true),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('Carries a core charge'),
+              title: const Text('Carries a returnable core charge'),
               subtitle:
-                  const Text('Refundable deposit on returnable old part'),
+                  const Text('Refundable deposit on exchangeable old part'),
               value: _hasCore,
               onChanged: (v) => setState(() => _hasCore = v),
             ),
             if (_hasCore) _field(_coreCharge, 'Core charge ₹', number: true),
             const SizedBox(height: 8),
-            _field(_barcode, 'Barcode'),
-            _field(_location, 'Rack / location (legacy)'),
-            _field(_notes, 'Notes', maxLines: 3),
+            _field(_barcode, 'Barcode (EAN / Code-128)'),
+            _field(_notes, 'Internal Notes / Compatibility Specs', maxLines: 2),
             const SizedBox(height: 24),
             FilledButton.icon(
               icon: const Icon(Icons.save),
               label: Text(editing ? 'Save Changes' : 'Add to Inventory'),
               onPressed: () => _save(inv, editing),
             ),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -202,6 +233,7 @@ class _PartEditScreenState extends State<PartEditScreen> {
   Future<void> _save(InventoryProvider inv, bool editing) async {
     if (!_form.currentState!.validate()) return;
     final qty = int.tryParse(_qty.text) ?? 0;
+
     if (editing) {
       final updated = widget.existing!.copyWith(
         name: _name.text.trim(),
@@ -216,6 +248,9 @@ class _PartEditScreenState extends State<PartEditScreen> {
         unit: _unit,
         quantity: qty,
         lowStockThreshold: int.tryParse(_low.text) ?? 5,
+        minStock: int.tryParse(_minStock.text) ?? 2,
+        maxStock: int.tryParse(_maxStock.text) ?? 50,
+        reorderQty: int.tryParse(_reorderQty.text) ?? 10,
         costPrice: double.tryParse(_cost.text) ?? 0,
         sellingPrice: double.tryParse(_sell.text) ?? 0,
         gstPercent: _gst,
@@ -225,6 +260,8 @@ class _PartEditScreenState extends State<PartEditScreen> {
         bin: _bin.text.trim().isEmpty ? null : _bin.text.trim(),
         barcode: _barcode.text.trim().isEmpty ? null : _barcode.text.trim(),
         location: _location.text.trim().isEmpty ? null : _location.text.trim(),
+        supplier: _supplier,
+        warrantyMonths: int.tryParse(_warranty.text) ?? 0,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       );
       await inv.updatePart(updated);
@@ -242,6 +279,9 @@ class _PartEditScreenState extends State<PartEditScreen> {
         unit: _unit,
         quantity: qty,
         lowStockThreshold: int.tryParse(_low.text) ?? 5,
+        minStock: int.tryParse(_minStock.text) ?? 2,
+        maxStock: int.tryParse(_maxStock.text) ?? 50,
+        reorderQty: int.tryParse(_reorderQty.text) ?? 10,
         costPrice: double.tryParse(_cost.text) ?? 0,
         sellingPrice: double.tryParse(_sell.text) ?? 0,
         gstPercent: _gst,
@@ -251,6 +291,8 @@ class _PartEditScreenState extends State<PartEditScreen> {
         bin: _bin.text.trim().isEmpty ? null : _bin.text.trim(),
         barcode: _barcode.text.trim().isEmpty ? null : _barcode.text.trim(),
         location: _location.text.trim().isEmpty ? null : _location.text.trim(),
+        supplier: _supplier,
+        warrantyMonths: int.tryParse(_warranty.text) ?? 0,
         notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
       );
     }

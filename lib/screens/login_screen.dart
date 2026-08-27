@@ -40,17 +40,26 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.lock_person,
-                        size: 56, color: AppTheme.primary),
-                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.lock_person,
+                          size: 48, color: AppTheme.primary),
+                    ),
+                    const SizedBox(height: 12),
                     Text('Sign in to PitStock',
                         style: Theme.of(context)
                             .textTheme
                             .titleLarge
                             ?.copyWith(fontWeight: FontWeight.w700)),
                     const SizedBox(height: 4),
-                    Text('Role-based access',
+                    Text('Automotive Spares & Garage Management',
+                        textAlign: TextAlign.center,
                         style: TextStyle(
+                            fontSize: 12.5,
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
@@ -58,12 +67,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     Wrap(
                       spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.center,
                       children: auth.users
                           .map((u) => ChoiceChip(
                                 label: Text('${u.name} (${u.role.label})'),
                                 selected: _selected?.id == u.id,
-                                onSelected: (_) =>
-                                    setState(() => _selected = u),
+                                onSelected: (_) {
+                                  setState(() {
+                                    _selected = u;
+                                    _pin.text = u.pin; // auto-fill demo pin
+                                    _error = null;
+                                  });
+                                },
                               ))
                           .toList(),
                     ),
@@ -74,8 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       maxLength: 4,
                       textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          letterSpacing: 8,
+                          fontWeight: FontWeight.bold),
                       decoration: InputDecoration(
-                        labelText: 'PIN',
+                        labelText: 'Enter 4-digit PIN',
                         errorText: _error,
                         counterText: '',
                       ),
@@ -83,20 +103,33 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
+                      height: 48,
                       child: FilledButton(
                         onPressed: () => _login(auth),
-                        child: const Text('Login'),
+                        child: const Text('Unlock & Continue',
+                            style: TextStyle(
+                                fontSize: 15, fontWeight: FontWeight.bold)),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    Text('Demo PINs: Owner 1111 • Manager 2222 • Staff 3333',
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primary.withOpacity(.08),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Demo PINs: Owner: 1111 • Manager: 2222 • Staff: 3333',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 11,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(.5))),
+                                .withOpacity(.7)),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -114,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
           context, MaterialPageRoute(builder: (_) => const HomeShell()));
     } else {
-      setState(() => _error = 'Incorrect PIN');
+      setState(() => _error = 'Incorrect PIN. Check demo PINs below.');
     }
   }
 }
